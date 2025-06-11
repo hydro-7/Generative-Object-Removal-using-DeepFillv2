@@ -72,9 +72,10 @@ python app.py
 ```
 
 ## **Notes**
--For best results, select the tightest bounding box around the object.
--The app automatically converts uploaded images to JPEG format for consistency.
--All processing is done locally — no external API calls.
+
+- For best results, select the tightest bounding box around the object.
+- The app automatically converts uploaded images to JPEG format for consistency.
+- All processing is done locally — no external API calls.
 
 
 ## **To Do List**
