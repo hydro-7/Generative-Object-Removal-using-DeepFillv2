@@ -39,16 +39,19 @@ def upload_image():
     if file.filename == '':
         return 'No image selected', 400
 
-    # Save uploaded image temporarily
-    image_path = os.path.join(UPLOAD_FOLDER, f"{uuid.uuid4().hex}.png")
-    file.save(image_path)
+    # Generate a unique path for image
+    raw_path = os.path.join(UPLOAD_FOLDER, f"{uuid.uuid4().hex}.jpg")
 
-    # Inpaint with object removal
+    # Open image using PIL, convert to RGB and save as JPEG
+    img = Image.open(file.stream).convert("RGB")
+    img.save(raw_path, format="JPEG")
+
+    # Run object removal
     model = ObjectRemove(
         segmentModel=rcnn,
         rcnn_transforms=transforms,
         inpaintModel=deepfill,
-        image_path=image_path
+        image_path=raw_path
     )
     output = model.run()
 
@@ -56,13 +59,12 @@ def upload_image():
     output_rgb = cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
     output_pil = Image.fromarray(output_rgb)
 
-    # Send inpainted image as downloadable file
+    # Send result as downloadable image
     buffer = BytesIO()
-    output_pil.save(buffer, format="PNG")
+    output_pil.save(buffer, format="PNG")  # output remains PNG to preserve quality
     buffer.seek(0)
 
-    # Clean up uploaded file
-    os.remove(image_path)
+    os.remove(raw_path)
 
     return send_file(buffer, mimetype='image/png')
 
