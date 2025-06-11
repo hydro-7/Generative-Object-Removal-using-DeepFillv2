@@ -79,6 +79,7 @@ python app.py
 
 
 ## **To Do List**
+- Add references and sources to the readme
 - Improve the GUI for bounding boxes with tkinter
 - Incoporate better UI features for the website
 - Deploy on HuggingFace Spaces / Docker
