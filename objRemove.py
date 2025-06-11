@@ -207,6 +207,56 @@ class ObjectRemove():
         
         return ref_point
     
+    # def inpaint(self):
+    #     # Run DeepFill to get RGB inpainted image
+    #     inpainted = self.inpaintModel.infer(
+    #         self.image_orig[0], self.highest_prob_mask, return_vals=['inpainted'])[0]
+
+    #     # Convert original image tensor to RGB numpy
+    #     image = self.image_orig[0].detach().permute(1, 2, 0).cpu().numpy()
+    #     image = (image * 255).astype(np.uint8)
+    #     h, w, _ = image.shape
+
+    #     # Resize inpainted to match original
+    #     inpainted = cv2.resize(inpainted, (w, h), interpolation=cv2.INTER_LINEAR)
+
+    #     # Prepare mask (resize and blur)
+    #     mask = self.highest_prob_mask[0].detach().cpu().numpy()
+    #     mask = cv2.resize(mask, (w, h), interpolation=cv2.INTER_LINEAR)
+    #     mask = cv2.GaussianBlur(mask, (21, 21), 5)
+    #     mask = np.expand_dims(mask, axis=2)
+
+    #     # Blend
+    #     blended = image * (1 - mask) + inpainted * mask
+    #     blended = np.clip(blended, 0, 255).astype(np.uint8)
+
+    #     # Return as BGR for OpenCV
+    #     return cv2.cvtColor(blended, cv2.COLOR_RGB2BGR)
+
     def inpaint(self):
-        output = self.inpaintModel.infer(self.image_orig[0], self.highest_prob_mask, return_vals=['inpainted'])
-        return output[0]
+        # Run DeepFill to get RGB inpainted image
+        inpainted = self.inpaintModel.infer(
+            self.image_orig[0], self.highest_prob_mask, return_vals=['inpainted'])[0]
+
+        # Convert original image tensor to RGB numpy
+        image = self.image_orig[0].detach().permute(1, 2, 0).cpu().numpy()
+        image = (image * 255).astype(np.uint8)
+        h, w, _ = image.shape
+
+        # Resize inpainted to match original
+        inpainted = cv2.resize(inpainted, (w, h), interpolation=cv2.INTER_LINEAR)
+
+        # Prepare and sharpen mask
+        mask = self.highest_prob_mask[0].detach().cpu().numpy()
+        mask = cv2.resize(mask, (w, h), interpolation=cv2.INTER_LINEAR)
+        mask = cv2.GaussianBlur(mask, (21, 21), 5)
+        mask = np.clip(mask * 1.5, 0, 1)  # sharpen feathering
+        mask = np.expand_dims(mask, axis=2)
+
+        # Blend with hard threshold
+        hard_mask = (mask > 0.5).astype(np.float32)
+        blended = image * (1 - hard_mask) + inpainted * hard_mask
+        blended = np.clip(blended, 0, 255).astype(np.uint8)
+
+        return cv2.cvtColor(blended, cv2.COLOR_RGB2BGR)
+
