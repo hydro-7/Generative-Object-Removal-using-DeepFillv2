@@ -1,4 +1,3 @@
-
 import copy
 import cv2
 import numpy as np
@@ -206,7 +205,8 @@ class ObjectRemove():
 
         
         return ref_point
-    
+
+        
 
     def inpaint(self):
         inpainted = self.inpaintModel.infer(
