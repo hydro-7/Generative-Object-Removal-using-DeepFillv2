@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Object Removal</title>
+  </head>
+  <body>
+    <h2>Upload an Image for Object Removal</h2>
+    <form action="/upload" method="post" enctype="multipart/form-data">
+      <input type="file" name="image" accept="image/*" required>
+      <button type="submit">Upload</button>
+    </form>
+    <p>After uploading, a region selection box will open (native OpenCV GUI). Use it and press Enter to confirm.</p>
+  </body>
+</html>
