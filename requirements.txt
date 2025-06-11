@@ -1,0 +1,7 @@
+Flask==3.0.3
+torch>=2.0.0
+torchvision>=0.15.0
+opencv-python>=4.7.0.72
+matplotlib>=3.7.0
+Werkzeug>=2.3.0
+numpy>=1.24.0
