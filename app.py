@@ -1,17 +1,15 @@
-from flask import Flask, render_template, request, send_file
+from flask import Flask, render_template, request, redirect, url_for
 import os
 import uuid
 import cv2
-import torch
 from PIL import Image
-from io import BytesIO
 
 from objRemove import ObjectRemove
 from models.deepFill import Generator
 from torchvision.models.detection import maskrcnn_resnet50_fpn, MaskRCNN_ResNet50_FPN_Weights
 
 app = Flask(__name__, static_folder='static')
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = 'static/outputs'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Load models at startup
@@ -19,7 +17,6 @@ weights = MaskRCNN_ResNet50_FPN_Weights.DEFAULT
 rcnn = maskrcnn_resnet50_fpn(weights=weights, progress=False).eval()
 transforms = weights.transforms()
 
-# Load DeepFill model from weights
 deepfill_weights_path = None
 for f in os.listdir('models'):
     if f.endswith('.pth'):
@@ -39,14 +36,13 @@ def upload_image():
     if file.filename == '':
         return 'No image selected', 400
 
-    # Generate a unique path for image
-    raw_path = os.path.join(UPLOAD_FOLDER, f"{uuid.uuid4().hex}.jpg")
+    raw_filename = f"{uuid.uuid4().hex}.jpg"
+    raw_path = os.path.join(UPLOAD_FOLDER, f"input_{raw_filename}")
+    final_path = os.path.join(UPLOAD_FOLDER, raw_filename)
 
-    # Open image using PIL, convert to RGB and save as JPEG
     img = Image.open(file.stream).convert("RGB")
     img.save(raw_path, format="JPEG")
 
-    # Run object removal
     model = ObjectRemove(
         segmentModel=rcnn,
         rcnn_transforms=transforms,
@@ -55,18 +51,18 @@ def upload_image():
     )
     output = model.run()
 
-    # Convert BGR → RGB for PIL
-    output_rgb = cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
-    output_pil = Image.fromarray(output_rgb)
-
-    # Send result as downloadable image
-    buffer = BytesIO()
-    output_pil.save(buffer, format="PNG")  # output remains PNG to preserve quality
-    buffer.seek(0)
+    cv2.imwrite(final_path, output)  # BGR, no color shift
 
     os.remove(raw_path)
 
-    return send_file(buffer, mimetype='image/png')
+    return redirect(url_for('result', filename=raw_filename))
+
+@app.route('/result')
+def result():
+    filename = request.args.get('filename')
+    if not filename:
+        return redirect('/')
+    return render_template('result.html', filename=filename)
 
 if __name__ == '__main__':
     app.run(debug=True)
