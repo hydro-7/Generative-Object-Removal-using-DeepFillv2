@@ -83,3 +83,6 @@ python app.py
 - Improve the GUI for bounding boxes with tkinter
 - Incoporate better UI features for the website
 - Deploy on HuggingFace Spaces / Docker
+- Free style select similar to the samsung ai instead of direct bounding box
+
+  
